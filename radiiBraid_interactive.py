@@ -8,9 +8,6 @@ import dash_bootstrap_components as dbc
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
-# Machine constant
-n = 192  # Number of horn gears
-
 # App layout
 app.layout = dbc.Container([
     dbc.Row([
@@ -18,6 +15,32 @@ app.layout = dbc.Container([
             html.H1("Interactive Fibre Angle Calculator", className="mt-4 mb-4")
         ])
     ]),
+    
+    dbc.Row([
+        dbc.Col([
+            html.H5("Number of Horn Gears"),
+            dcc.Slider(
+                id='n-slider',
+                min=1,
+                max=192,
+                step=1,
+                value=192,
+                marks={i: f'{i}' for i in range(0, 193, 48)},
+                tooltip={"placement": "bottom", "always_visible": True}
+            ),
+            dbc.Input(
+                id='n-input',
+                type='number',
+                placeholder='Enter value',
+                value=192,
+                min=1,
+                max=192,
+                step=1,
+                n_submit=0,
+                className="mt-2"
+            ),
+        ], md=12),
+    ], className="mb-3 p-4 border rounded bg-light"),
     
     dbc.Row([
         dbc.Col([
@@ -39,6 +62,7 @@ app.layout = dbc.Container([
                 min=1,
                 max=1000,
                 step=1,
+                n_submit=0,
                 className="mt-2"
             ),
         ], md=4),
@@ -62,6 +86,7 @@ app.layout = dbc.Container([
                 min=25,
                 max=150,
                 step=1,
+                n_submit=0,
                 className="mt-2"
             ),
         ], md=4),
@@ -85,6 +110,7 @@ app.layout = dbc.Container([
                 min=10,
                 max=80,
                 step=1,
+                n_submit=0,
                 className="mt-2"
             ),
         ], md=4),
@@ -100,6 +126,17 @@ app.layout = dbc.Container([
         dbc.Col([
             html.Div(id='intersection-info', className="mt-4 p-3 bg-info text-white rounded")
         ])
+    ]),
+    
+    dbc.Row([
+        dbc.Col([
+            html.Hr(className="mt-5 mb-4"),
+            html.Div([
+                html.P("Developed by Antony Nixon, University of Sheffield AMRC", className="text-center mb-1"),
+                html.P("A.Nixon@amrc.co.uk", className="text-center mb-1"),
+                html.P(f"© {2025} All rights reserved", className="text-center text-muted small")
+            ], className="mb-4")
+        ])
     ])
 ], fluid=True)
 
@@ -107,10 +144,11 @@ app.layout = dbc.Container([
 # Callback to sync slider with input
 @app.callback(
     Output('dm-slider', 'value'),
-    Input('dm-input', 'value'),
+    [Input('dm-input', 'value'),
+     Input('dm-input', 'n_submit')],
     prevent_initial_call=False
 )
-def update_dm_slider(input_value):
+def update_dm_slider(input_value, n_submit):
     if input_value is not None:
         return max(1, min(1000, input_value))
     return 100
@@ -129,10 +167,11 @@ def update_dm_input(slider_value):
 # Callback to sync slider with input for HGS
 @app.callback(
     Output('hgs-slider', 'value'),
-    Input('hgs-input', 'value'),
+    [Input('hgs-input', 'value'),
+     Input('hgs-input', 'n_submit')],
     prevent_initial_call=False
 )
-def update_hgs_slider(input_value):
+def update_hgs_slider(input_value, n_submit):
     if input_value is not None:
         return max(25, min(150, input_value))
     return 100
@@ -151,10 +190,11 @@ def update_hgs_input(slider_value):
 # Callback to sync slider with input for angle
 @app.callback(
     Output('angle-slider', 'value'),
-    Input('angle-input', 'value'),
+    [Input('angle-input', 'value'),
+     Input('angle-input', 'n_submit')],
     prevent_initial_call=False
 )
-def update_angle_slider(input_value):
+def update_angle_slider(input_value, n_submit):
     if input_value is not None:
         return max(10, min(80, input_value))
     return 45
@@ -170,14 +210,38 @@ def update_angle_input(slider_value):
     return slider_value
 
 
+# Callback to sync slider with input for n
+@app.callback(
+    Output('n-slider', 'value'),
+    [Input('n-input', 'value'),
+     Input('n-input', 'n_submit')],
+    prevent_initial_call=False
+)
+def update_n_slider(input_value, n_submit):
+    if input_value is not None:
+        return max(1, min(192, input_value))
+    return 192
+
+
+# Callback to sync input with slider for n
+@app.callback(
+    Output('n-input', 'value'),
+    Input('n-slider', 'value'),
+    prevent_initial_call=False
+)
+def update_n_input(slider_value):
+    return slider_value
+
+
 @app.callback(
     [Output('fibre-angle-graph', 'figure'),
      Output('intersection-info', 'children')],
     [Input('dm-slider', 'value'),
      Input('hgs-slider', 'value'),
-     Input('angle-slider', 'value')]
+     Input('angle-slider', 'value'),
+     Input('n-slider', 'value')]
 )
-def update_graph(dm, hgs, target_angle):
+def update_graph(dm, hgs, target_angle, n):
     # Create velocity range
     v_range = np.linspace(0, 100, 200)
     
@@ -226,7 +290,7 @@ def update_graph(dm, hgs, target_angle):
     
     # Update layout
     fig.update_layout(
-        title=f'Fibre Angle (α) vs. Mandrel Velocity<br>(192 Gears, {dm}mm Mandrel, {hgs} RPM)',
+        title=f'Fibre Angle (α) vs. Mandrel Velocity<br>({n} Gears, {dm}mm Mandrel, {hgs} RPM)',
         xaxis_title='Mandrel Velocity (v) [mm/s]',
         yaxis_title='Fibre Angle (α) [degrees]',
         hovermode='x unified',
@@ -239,6 +303,7 @@ def update_graph(dm, hgs, target_angle):
     
     # Info text
     info_text = html.Div([
+        html.P(f"Number of Horn Gears: {n}", className="mb-2"),
         html.P(f"Mandrel Diameter: {dm} mm", className="mb-2"),
         html.P(f"Horn Gear Speed: {hgs} RPM", className="mb-2"),
         html.P(f"Target Fibre Angle: {target_angle}°", className="mb-2"),
