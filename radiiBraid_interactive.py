@@ -6,6 +6,7 @@ import dash_bootstrap_components as dbc
 
 # Initialize the Dash app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+server = app.server
 
 # Machine constant
 n = 192  # Number of horn gears
