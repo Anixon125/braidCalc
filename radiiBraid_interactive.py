@@ -151,7 +151,7 @@ app.layout = dbc.Container([
 def update_dm_slider(input_value, n_submit):
     if input_value is not None:
         return max(1, min(1000, input_value))
-    return 100
+    return 
 
 
 # Callback to sync input with slider
@@ -173,8 +173,8 @@ def update_dm_input(slider_value):
 )
 def update_hgs_slider(input_value, n_submit):
     if input_value is not None:
-        return max(25, min(150, input_value))
-    return 100
+        return max(1, min(150, input_value))
+    return 
 
 
 # Callback to sync input with slider for HGS
@@ -197,7 +197,7 @@ def update_hgs_input(slider_value):
 def update_angle_slider(input_value, n_submit):
     if input_value is not None:
         return max(10, min(80, input_value))
-    return 45
+    return 
 
 
 # Callback to sync input with slider for angle
@@ -220,7 +220,7 @@ def update_angle_input(slider_value):
 def update_n_slider(input_value, n_submit):
     if input_value is not None:
         return max(1, min(192, input_value))
-    return 192
+    return 
 
 
 # Callback to sync input with slider for n
